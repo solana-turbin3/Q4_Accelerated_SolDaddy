@@ -7,28 +7,55 @@ use pinocchio::sysvars::rent::Rent;
 use pinocchio::sysvars::Sysvar;
 use pinocchio_associated_token_account::instructions::CreateIdempotent;
 use pinocchio_system::instructions::CreateAccount;
+use bytemuck::{Pod, Zeroable};
 use crate::constants::MIN_AMOUNT_TO_RAISE;
 use crate::state::Fundraiser;
 
-#[repr(C, packed)]
-#[derive(Clone, Copy, Debug)]
+// #[repr(C)]  //
+// #[derive(Clone, Copy, Debug, Pod, Zeroable)]
+// pub struct InitializeIxData {
+//     pub amount: u64,
+//     pub duration: u8,
+//     pub _padding: [u8; 7],
+// }
+//
+// impl InitializeIxData {
+//     pub const LEN: usize = core::mem::size_of::<Self>();
+//
+//     #[inline(always)]
+//     pub fn load_ix_data(bytes: &[u8]) -> Result<&Self, ProgramError> {
+//         bytemuck::try_from_bytes(bytes)
+//             .map_err(|_| ProgramError::InvalidInstructionData)
+//     }
+// }
+
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Pod, Zeroable)]
 pub struct InitializeIxData {
     pub amount: u64,
     pub duration: u8,
+    pub _padding: [u8; 7],
 }
 
 impl InitializeIxData {
-    pub const LEN: usize = core::mem::size_of::<Self>();
+    pub const LEN: usize = 16;
 
     #[inline(always)]
-    pub unsafe fn load_ix_data(bytes: &[u8]) -> Result<Self, ProgramError> {
-        if bytes.len() != Self::LEN {
+    pub fn load_ix_data(bytes: &[u8]) -> Result<Self, ProgramError> {
+
+        if bytes.len() < Self::LEN {
             return Err(ProgramError::InvalidInstructionData);
         }
 
-        Ok(*(bytes.as_ptr() as *const Self))
+        // Create aligned buffer on stack
+        let mut aligned_data = [0u8; Self::LEN];
+        aligned_data.copy_from_slice(&bytes[..Self::LEN]);
+
+        Ok(*bytemuck::from_bytes::<Self>(&aligned_data))
     }
 }
+
+
 
 pub fn process_initialize(accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
     let [maker,
@@ -43,7 +70,7 @@ pub fn process_initialize(accounts: &[AccountInfo], data: &[u8]) -> ProgramResul
         return Err(ProgramError::NotEnoughAccountKeys);
     };
 
-    let ix_data = unsafe { InitializeIxData::load_ix_data(data)? };
+    let ix_data = InitializeIxData::load_ix_data(data)?;  // ✅ No unsafe needed
 
     // Basic checks
     if !maker.is_signer() {

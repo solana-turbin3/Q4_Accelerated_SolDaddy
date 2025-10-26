@@ -8,25 +8,34 @@ use pinocchio::{
     sysvars::Sysvar,
 };
 use pinocchio_token::instructions::Transfer;
+use bytemuck::{Pod, Zeroable};
+use core::mem::size_of;
 use crate::constants::{MAX_CONTRIBUTION_PERCENTAGE, PERCENTAGE_SCALER, SECONDS_TO_DAYS};
 use crate::error::FundraiserError;
 use crate::state::{Fundraiser, Contributor};
 
 
-#[derive(Clone, Copy)]
-pub struct ContributeIxData{
+
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Pod, Zeroable)]
+pub struct ContributeIxData {
     pub amount: u64,
 }
 
-impl ContributeIxData{
-    pub const LEN: usize = size_of::<Self>();
+impl ContributeIxData {
+    pub const LEN: usize = 8;
 
     #[inline(always)]
-    pub unsafe fn load_ix_data(bytes: &[u8]) -> Result<Self, ProgramError> {
-        if bytes.len() != Self::LEN {
+    pub fn load_ix_data(bytes: &[u8]) -> Result<Self, ProgramError> {
+        if bytes.len() < Self::LEN {
             return Err(ProgramError::InvalidInstructionData);
         }
-        Ok(*(bytes.as_ptr() as *const Self))
+
+        // Create aligned buffer on stack
+        let mut aligned_data = [0u8; Self::LEN];
+        aligned_data.copy_from_slice(&bytes[..Self::LEN]);
+
+        Ok(*bytemuck::from_bytes::<Self>(&aligned_data))
     }
 }
 
@@ -46,7 +55,7 @@ pub fn process_contribute(accounts: &[AccountInfo], data: &[u8]) -> ProgramResul
         return Err(ProgramError::NotEnoughAccountKeys);
     };
 
-    let ix_data = unsafe { ContributeIxData::load_ix_data(data)? };
+    let ix_data = ContributeIxData::load_ix_data(data)?;
 
     if !contributor.is_signer() {
         return Err(ProgramError::MissingRequiredSignature);

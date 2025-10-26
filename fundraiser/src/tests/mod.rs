@@ -100,7 +100,10 @@ mod tests {
             vec![0u8],
             amount_to_raise.to_le_bytes().to_vec(),
             vec![duration],
+            vec![0u8;7],
         ].concat();
+        msg!("Instruction data length: {}", init_data.len());
+
 
         msg!("Instruction data:");
         msg!("  Length: {} bytes", init_data.len());
@@ -239,6 +242,7 @@ mod tests {
             vec![0u8],
             amount_to_raise.to_le_bytes().to_vec(),
             vec![duration],
+            vec![0u8;7]
         ].concat();
 
         let init_ix = Instruction {
@@ -327,6 +331,7 @@ mod tests {
         assert_eq!(current_amount, contribution_amount);
         msg!("Current amount: {}", current_amount);
 
+
         msg!("Contribute test passed!");
         msg!("\n\n\n");
     }
@@ -365,6 +370,7 @@ mod tests {
             vec![0u8],
             amount_to_raise.to_le_bytes().to_vec(),
             vec![duration],
+            vec![0u8;7]
         ].concat();
 
         let init_ix = Instruction {
@@ -537,6 +543,7 @@ mod tests {
             vec![0u8],
             amount_to_raise.to_le_bytes().to_vec(),
             vec![duration],
+            vec![0u8;7]
         ].concat();
 
         let init_ix = Instruction {

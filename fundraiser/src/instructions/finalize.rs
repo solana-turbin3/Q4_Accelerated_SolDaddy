@@ -5,12 +5,10 @@ use pinocchio::{ProgramResult};
 
 use pinocchio_associated_token_account::instructions::CreateIdempotent;
 use pinocchio_token::instructions::{CloseAccount, Transfer};
-
 use pinocchio_token::ID as PINOCCHIO_TOKEN_ID;
 
 use crate::state::Fundraiser;
 use crate::error::FundraiserError;
-
 
 pub fn process_finalize(accounts: &[AccountInfo]) -> ProgramResult {
     let [
@@ -37,7 +35,7 @@ pub fn process_finalize(accounts: &[AccountInfo]) -> ProgramResult {
     if fundraiser_data.current_amount < fundraiser_data.amount_to_raise {
         return Err(FundraiserError::TargetNotMet.into());
     }
-    
+
     let bump_bytes = [bump];
     let seeds: [Seed; 3] = [
         Seed::from(b"fundraiser"),
@@ -46,7 +44,6 @@ pub fn process_finalize(accounts: &[AccountInfo]) -> ProgramResult {
     ];
     let fundraiser_signer = Signer::from(&seeds);
 
-  
     if maker_ata.data_is_empty() {
         CreateIdempotent {
             funding_account: maker,
@@ -55,7 +52,7 @@ pub fn process_finalize(accounts: &[AccountInfo]) -> ProgramResult {
             mint: mint_to_raise,
             system_program,
             token_program,
-        }.invoke()?; 
+        }.invoke()?;
     } else {
         // Verify it's the correct ATA
         if maker_ata.owner() != &PINOCCHIO_TOKEN_ID {
@@ -85,12 +82,10 @@ pub fn process_finalize(accounts: &[AccountInfo]) -> ProgramResult {
         let fundraiser_lamports = fundraiser.lamports();
         *maker.try_borrow_mut_lamports()? += fundraiser_lamports;
         *fundraiser.try_borrow_mut_lamports()? = 0;
-
     }
 
     // Zero out data
     fundraiser.realloc(0, false)?;
-
 
     Ok(())
 }
