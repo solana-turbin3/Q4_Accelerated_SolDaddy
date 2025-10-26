@@ -19,7 +19,7 @@ pub struct ContributeIxData{
 }
 
 impl ContributeIxData{
-    pub const LEN: usize = core::mem::size_of::<Self>();
+    pub const LEN: usize = size_of::<Self>();
 
     #[inline(always)]
     pub unsafe fn load_ix_data(bytes: &[u8]) -> Result<Self, ProgramError> {
@@ -33,13 +33,13 @@ impl ContributeIxData{
 pub fn process_contribute(accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
     let [
         contributor,
-        mint_to_raise,
+        _mint_to_raise,
         fundraiser,
         contributor_account,
         contributor_ata,
         vault,
-        token_program,
-        system_program,
+        _token_program,
+        _system_program,
         rent_sysvar,
         ..
     ] = accounts else {

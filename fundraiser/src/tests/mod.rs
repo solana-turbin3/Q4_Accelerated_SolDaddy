@@ -14,7 +14,6 @@ mod tests {
     use solana_pubkey::Pubkey;
     use solana_signer::Signer;
     use solana_transaction::Transaction;
-    use spl_token::ID;
     use crate::constants::MIN_AMOUNT_TO_RAISE;
     use crate::state::Fundraiser;
 
@@ -211,7 +210,7 @@ mod tests {
 
         msg!("Starting contribute test...");
 
-        // First, initialize the fundraiser
+        // Initialize the fundraiser
         let mint_to_raise = CreateMint::new(&mut svm, &payer)
             .decimals(6)
             .authority(&payer.pubkey())

@@ -3,7 +3,7 @@ use pinocchio::program_error::ProgramError;
 use pinocchio::pubkey::Pubkey;
 
 
-#[repr(C)]
+#[repr(C,packed)]
 #[derive(Debug, Clone, Copy)]
 pub struct Fundraiser {
     pub maker: Pubkey,          // 32 bytes
@@ -13,7 +13,6 @@ pub struct Fundraiser {
     pub time_started: i64,      // 8 bytes
     pub duration: u8,           // 1 byte
     pub bump: u8,               // 1 byte
-    // total: 90 bytes → padded by compiler to 96 bytes
 }
 
 impl Fundraiser {

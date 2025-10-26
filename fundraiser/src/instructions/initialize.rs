@@ -1,5 +1,4 @@
 use pinocchio::account_info::AccountInfo;
-use pinocchio::cpi::invoke_signed;
 use pinocchio::instruction::{Seed, Signer};
 use pinocchio::program_error::ProgramError;
 use pinocchio::{pubkey, ProgramResult};
@@ -8,7 +7,6 @@ use pinocchio::sysvars::rent::Rent;
 use pinocchio::sysvars::Sysvar;
 use pinocchio_associated_token_account::instructions::CreateIdempotent;
 use pinocchio_system::instructions::CreateAccount;
-use pinocchio_token::instructions::InitializeAccount;
 use crate::constants::MIN_AMOUNT_TO_RAISE;
 use crate::state::Fundraiser;
 

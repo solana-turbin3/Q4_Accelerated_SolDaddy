@@ -1,17 +1,17 @@
 use pinocchio::account_info::AccountInfo;
 use pinocchio::instruction::{Seed, Signer};
 use pinocchio::program_error::ProgramError;
-use pinocchio::{pubkey, ProgramResult};
+use pinocchio::{ProgramResult};
 
 use pinocchio_associated_token_account::instructions::CreateIdempotent;
-use pinocchio_token::instructions::{CloseAccount, InitializeAccount, Transfer};
-use pinocchio_token::state::TokenAccount as TokenAccountState;
+use pinocchio_token::instructions::{CloseAccount, Transfer};
+
 use pinocchio_token::ID as PINOCCHIO_TOKEN_ID;
 
 use crate::state::Fundraiser;
 use crate::error::FundraiserError;
 
-/// Finalize (check contributions, transfer to maker, close fundraiser)
+
 pub fn process_finalize(accounts: &[AccountInfo]) -> ProgramResult {
     let [
     maker,
@@ -21,8 +21,6 @@ pub fn process_finalize(accounts: &[AccountInfo]) -> ProgramResult {
     maker_ata,
     token_program,
     system_program,
-    rent_account,
-    _associated_token_prog,
     ..
     ] = accounts else {
         return Err(ProgramError::NotEnoughAccountKeys);
@@ -35,12 +33,11 @@ pub fn process_finalize(accounts: &[AccountInfo]) -> ProgramResult {
     let fundraiser_data = Fundraiser::from_account_info(fundraiser)?;
     let bump = fundraiser_data.bump;
 
-    // ✅ Check target met using fundraiser_data (simpler)
+    // Check target met or not
     if fundraiser_data.current_amount < fundraiser_data.amount_to_raise {
         return Err(FundraiserError::TargetNotMet.into());
     }
-
-    // PDA seeds for signing
+    
     let bump_bytes = [bump];
     let seeds: [Seed; 3] = [
         Seed::from(b"fundraiser"),
@@ -49,7 +46,7 @@ pub fn process_finalize(accounts: &[AccountInfo]) -> ProgramResult {
     ];
     let fundraiser_signer = Signer::from(&seeds);
 
-    // ✅ Create maker ATA if it doesn't exist (conditional like in contribute)
+  
     if maker_ata.data_is_empty() {
         CreateIdempotent {
             funding_account: maker,
@@ -58,15 +55,15 @@ pub fn process_finalize(accounts: &[AccountInfo]) -> ProgramResult {
             mint: mint_to_raise,
             system_program,
             token_program,
-        }.invoke()?; // ✅ No signer needed, maker is already signer
+        }.invoke()?; 
     } else {
-        // ✅ Verify it's the correct ATA
+        // Verify it's the correct ATA
         if maker_ata.owner() != &PINOCCHIO_TOKEN_ID {
             return Err(ProgramError::IllegalOwner);
         }
     }
 
-    // ✅ Transfer all tokens from vault to maker_ata
+    // Transfer all tokens from vault to maker_ata
     let amount_to_transfer = fundraiser_data.current_amount;
 
     Transfer {
@@ -76,14 +73,14 @@ pub fn process_finalize(accounts: &[AccountInfo]) -> ProgramResult {
         amount: amount_to_transfer,
     }.invoke_signed(&[fundraiser_signer.clone()])?;
 
-    // ✅ Close vault to reclaim rent
+    // Close vault to reclaim rent
     CloseAccount {
         account: vault,
         destination: maker,
         authority: fundraiser,
     }.invoke_signed(&[fundraiser_signer])?;
 
-    // ✅ Close fundraiser account and transfer lamports to maker
+    // Close fundraiser account and transfer lamports to maker
     {
         let fundraiser_lamports = fundraiser.lamports();
         *maker.try_borrow_mut_lamports()? += fundraiser_lamports;

@@ -1,16 +1,16 @@
-mod initialize;
 
 use pinocchio::program_error::ProgramError;
+use crate::FundraiserInstructions::Finalize;
+use crate::instructions::FundraiserInstructions::{Contribute, Initialize, Refund};
+mod initialize;
 pub use initialize::*;
 mod contribute;
 pub use contribute::*;
-mod refund;
 pub mod finalize;
 pub use finalize::*;
 
+mod refund;
 pub use refund::*;
-use crate::FundraiserInstructions::Finalize;
-use crate::instructions::FundraiserInstructions::{Contribute, Initialize, Refund};
 
 pub enum FundraiserInstructions {
     Initialize = 0,
